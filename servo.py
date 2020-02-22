@@ -36,4 +36,3 @@ while 1:
 
 pwm.stop()
 GPIO.cleanup()
-
