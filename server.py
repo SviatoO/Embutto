@@ -12,6 +12,7 @@ from time import sleep, time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from wsgiref.simple_server import make_server
 
+from websocket import create_connection
 import picamera
 from ws4py.websocket import WebSocket
 from ws4py.server.wsgirefserver import (
@@ -38,13 +39,14 @@ HFLIP = False
 
 
 ###########################################
+ws = create_connection("ws://localhost:8085")
 
 
 class StreamingHttpHandler(BaseHTTPRequestHandler):
     def do_HEAD(self):
         self.do_GET()
 
-    def do_GET(self):
+    def do_GET(selfws.send("Hello, World")ws.send("Hello, World")):
         if self.path == '/':
             self.send_response(301)
             self.send_header('Location', '/index.html')
@@ -113,20 +115,20 @@ class BroadcastOutput(object):
         self.converter.wait()
 
 class BroadcastThread(Thread):
-    def __init__(self, converter, websocket_server, temp_sender):
+    def __init__(self, converter, websocket_server, sender ):
         super(BroadcastThread, self).__init__()
         self.converter = converter
         self.websocket_server = websocket_server
-        self.temp_sender = temp_sender
+        self.sender = sender
 
     def run(self):
         try:
             while True:
                 buf = self.converter.stdout.read1(32768)
+
+                ws.send(self.sender.read_temp())
                 if buf:
-                    data = self.temp_sender.read_temp()
-                    message = {'temp' : data, 'data': buf}
-                    self.websocket_server.manager.broadcast(message)
+                    self.websocket_server.manager.broadcast(buf)
                 elif self.converter.poll() is not None:
                     break
         finally:
@@ -140,6 +142,7 @@ class TempSender(Thread):
 
     def read_temp(self):
         return [23,24]
+
 
 def main():
     print('Initializing camera')
@@ -158,18 +161,21 @@ def main():
             app=WebSocketWSGIApplication(handler_cls=StreamingWebSocket))
         websocket_server.initialize_websockets_manager()
         websocket_thread = Thread(target=websocket_server.serve_forever)
+
         print('Initializing HTTP server on port %d' % HTTP_PORT)
+
         http_server = StreamingHttpServer()
         http_thread = Thread(target=http_server.serve_forever)
         print('Initializing broadcast thread')
         output = BroadcastOutput(camera)
         # TODO : CHange
-        broadcast_thread = BroadcastThread(output.converter, websocket_server, TempSender())
+        broadcast_thread = BroadcastThread(output.converter, websocket_server)
         print('Starting recording')
         camera.start_recording(output, 'yuv')
         try:
             print('Starting websockets thread')
             websocket_thread.start()
+
             print('Starting HTTP server thread')
             http_thread.start()
             print('Starting broadcast thread')

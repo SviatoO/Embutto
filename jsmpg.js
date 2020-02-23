@@ -50,7 +50,28 @@ var jsmpeg = window.jsmpeg = function( url, opts ) {
 	}
 };
 
+var socket = new WebSocket('ws://localhost:8085');
 
+if (socket != null) {
+    socket.onmessage = function(event) {
+        // fired when a message is received from the server
+        alert(event.data);
+    };
+
+    socket.onclose = function() {
+        // fired when the socket gets closed
+    };
+
+    socket.onerror = function(event) {
+        // fired when there's been a socket error
+    };
+
+    socket.onopen = function() {
+    };
+}
+else {
+    alert('WebSockets are not supported by your browser');
+}
 
 // ----------------------------------------------------------------------------
 // Streaming over WebSockets
