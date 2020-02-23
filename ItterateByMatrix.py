@@ -55,7 +55,7 @@ maxDownAngle = 8.5
 #end angle of ver servo
 maxUpAngle = 10.3
 #current state
-currentHorValue = 0
+currentHorValue = maxUpAngle
 #row numbers
 rows = 4
 
@@ -87,21 +87,24 @@ def setOnTopLeft():
     currentHorValue = maxUpAngle
 
 
-irValues = np.zeros((rows,readCounter), int)
-row = 0
+Array0 = []
+Array1 = []
+Array2 = []
+Array3 = []
+
+#row = 0
 
 
 def turnRight():
     angle = maxLeftAngle
     horysontalServo.ChangeDutyCycle(angle)
-    cul = 0    
+        
 
     while angle<maxRightAngle:
         angle += horisontalStep;
         horysontalServo.ChangeDutyCycle(angle)
-        irValues[row][cul] = sensor.get_obj_temp()
+        Array0.append(sensor.get_obj_temp())
 	#print(str(irValues[row,cul]))
-        cul+=1
         time.sleep(0.1)
 
 def turnLeft():
@@ -112,12 +115,38 @@ def turnLeft():
     while angle > maxLeftAngle:
         angle -= horisontalStep;
         horysontalServo.ChangeDutyCycle(angle)
-        irValues[row][cul] = sensor.get_obj_temp()
+        Array1.append(sensor.get_obj_temp())
         cul+=1
+    Array1.reverse()
+
+def turnRight1():
+    angle = maxLeftAngle
+    horysontalServo.ChangeDutyCycle(angle)
+        
+
+    while angle<maxRightAngle:
+        angle += horisontalStep;
+        horysontalServo.ChangeDutyCycle(angle)
+        Array2.append(sensor.get_obj_temp())
+    #print(str(irValues[row,cul]))
+        time.sleep(0.1)
+
+def turnLeft1():
+    angle = maxRightAngle
+    horysontalServo.ChangeDutyCycle(angle)
+    cul = 0
+
+    while angle > maxLeftAngle:
+        angle -= horisontalStep;
+        horysontalServo.ChangeDutyCycle(angle)
+        Array3.append(sensor.get_obj_temp())
+        cul+=1
+    Array1.reverse()
+
 
 def turnDown():
-    curDegr = currentHorValue - ((maxUpAngle - maxDownAngle)/rows)
-    verticalServo.ChangeDutyCycle(currentHorValue)
+    curDegr = float(currentHorValue - ((maxUpAngle - maxDownAngle)/rows))
+    verticalServo.ChangeDutyCycle(curDegrr)
     currentHorValue = curDegr
     print (currentHorValue)
     row+=1
@@ -128,5 +157,10 @@ def main():
     turnRight()
     turnDown()
     turnLeft()
+    turnDown()
+    turnRight1()
+    turnDown()
+    turnLeft1()
+
 
 main()
