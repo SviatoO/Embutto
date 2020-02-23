@@ -1,3 +1,4 @@
+
 import smbus
 import RPi.GPIO as GPIO
 import time
@@ -64,13 +65,13 @@ maxLeftAngle = 5.8
 maxRightAngle = 8.6
 
 
-horysontalServoPIN = 17
+horysontalServoPIN = 18
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(horysontalServoPIN, GPIO.OUT)
 horysontalServo = GPIO.PWM(horysontalServoPIN, 50) # GPIO 17 for PWM with 50Hz
 horysontalServo.start(maxLeftAngle) # Initialization
 #init Servo ver
-verticalServoPIN = 18
+verticalServoPIN = 17
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(verticalServoPIN, GPIO.OUT)
 verticalServo = GPIO.PWM(verticalServoPIN, 50) # GPIO 18 for PWM with 50Hz
@@ -78,7 +79,7 @@ verticalServo.start(8.5) # Initialization
 
 #num of readings of IR value
 readCounter = 7
-horisontalStep = (maxRightAngle - maxLeftAngle) / readCounter
+horisontalStep = float((maxRightAngle - maxLeftAngle) / readCounter)
 
 def setOnTopLeft():
     verticalServo.ChangeDutyCycle(maxUpAngle)
@@ -86,47 +87,46 @@ def setOnTopLeft():
     currentHorValue = maxUpAngle
 
 
-
-irValues = np.zeros((rows, readCounter), float)
-#irValues = np.array([],[])
+irValues = np.zeros((rows,readCounter), int)
 row = 0
 
 
 def turnRight():
     angle = maxLeftAngle
     horysontalServo.ChangeDutyCycle(angle)
-    cul = 0
-    
+    cul = 0    
 
-    while angle!=maxRightAngle:
+    while angle<maxRightAngle:
         angle += horisontalStep;
         horysontalServo.ChangeDutyCycle(angle)
         irValues[row][cul] = sensor.get_obj_temp()
 	#print(str(irValues[row,cul]))
         cul+=1
-	time.sleep(1)
-	
-    
+        time.sleep(0.1)
 
 def turnLeft():
     angle = maxRightAngle
     horysontalServo.ChangeDutyCycle(angle)
     cul = 0
 
-    while angle != maxLeftAngle:
+    while angle > maxLeftAngle:
         angle -= horisontalStep;
         horysontalServo.ChangeDutyCycle(angle)
         irValues[row][cul] = sensor.get_obj_temp()
         cul+=1
 
 def turnDown():
-    verticalServo.ChangeDutyCycle(currentHorValue - ((maxUpAngle - maxDownAngle)/rows) )
-
+    curDegr = currentHorValue - ((maxUpAngle - maxDownAngle)/rows)
+    verticalServo.ChangeDutyCycle(currentHorValue)
+    currentHorValue = curDegr
+    print (currentHorValue)
     row+=1
 
 
 def main():
     setOnTopLeft()
     turnRight()
+    turnDown()
+    turnLeft()
 
 main()
