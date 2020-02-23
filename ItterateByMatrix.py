@@ -1,7 +1,7 @@
 import smbus
 import RPi.GPIO as GPIO
 import time
-import numpy
+import numpy as np
 
 class MLX90614():
 
@@ -49,19 +49,6 @@ print(sensor.get_amb_temp())
 print(sensor.get_obj_temp())
 
 
-
-horysontalServoPIN = 17
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(servoPIN, GPIO.OUT)
-horysontalServo = GPIO.PWM(horysontalServoPIN, 50) # GPIO 17 for PWM with 50Hz
-horysontalServo.start(maxLeftAngle) # Initialization
-#init Servo ver
-verticalServoPIN = 18
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(servoPIN, GPIO.OUT)
-verticalServo = GPIO.PWM(verticalServoPIN, 50) # GPIO 18 for PWM with 50Hz
-verticalServo.start(8.5) # Initialization
-
 #start angle of ver servo
 maxDownAngle = 8.5
 #end angle of ver servo
@@ -76,6 +63,19 @@ maxLeftAngle = 5.8
 #max right angle of horys 
 maxRightAngle = 8.6
 
+
+horysontalServoPIN = 17
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(horysontalServoPIN, GPIO.OUT)
+horysontalServo = GPIO.PWM(horysontalServoPIN, 50) # GPIO 17 for PWM with 50Hz
+horysontalServo.start(maxLeftAngle) # Initialization
+#init Servo ver
+verticalServoPIN = 18
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(verticalServoPIN, GPIO.OUT)
+verticalServo = GPIO.PWM(verticalServoPIN, 50) # GPIO 18 for PWM with 50Hz
+verticalServo.start(8.5) # Initialization
+
 #num of readings of IR value
 readCounter = 7
 horisontalStep = (maxRightAngle - maxLeftAngle) / readCounter
@@ -85,7 +85,10 @@ def setOnTopLeft():
     horysontalServo.ChangeDutyCycle(maxLeftAngle)
     currentHorValue = maxUpAngle
 
-irValues = np.array([readCounter, rows])
+
+
+irValues = np.zeros((rows, readCounter), float)
+#irValues = np.array([],[])
 row = 0
 
 
@@ -93,12 +96,16 @@ def turnRight():
     angle = maxLeftAngle
     horysontalServo.ChangeDutyCycle(angle)
     cul = 0
+    
 
-    While(angle != maxRightAngle):
+    while angle!=maxRightAngle:
         angle += horisontalStep;
         horysontalServo.ChangeDutyCycle(angle)
-        irValues[row,cul ] = sensor.get_obj_temp()
-        cul++
+        irValues[row][cul] = sensor.get_obj_temp()
+	#print(str(irValues[row,cul]))
+        cul+=1
+	time.sleep(1)
+	
     
 
 def turnLeft():
@@ -106,15 +113,20 @@ def turnLeft():
     horysontalServo.ChangeDutyCycle(angle)
     cul = 0
 
-    While(angle != maxLeftAngle):
+    while angle != maxLeftAngle:
         angle -= horisontalStep;
         horysontalServo.ChangeDutyCycle(angle)
-        irValues[row,cul ] = sensor.get_obj_temp()
-        cul++
+        irValues[row][cul] = sensor.get_obj_temp()
+        cul+=1
 
 def turnDown():
     verticalServo.ChangeDutyCycle(currentHorValue - ((maxUpAngle - maxDownAngle)/rows) )
 
-    row++
+    row+=1
 
 
+def main():
+    setOnTopLeft()
+    turnRight()
+
+main()
