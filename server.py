@@ -141,20 +141,6 @@ class TempSender(Thread):
     def read_temp(self):
         return [23,24]
 
-def init_temp_sender():
-    print('Initializing websockets for temp on port %d' % WS_PORT)
-    WebSocketWSGIHandler.http_version = '1.1'
-    websocket_server = make_server(
-        '', WS_PORT_TEMP,
-        server_class=WSGIServer,
-        handler_class=WebSocketWSGIRequestHandler,
-        app=WebSocketWSGIApplication(handler_cls=WebSocket()))
-    websocket_server.initialize_websockets_manager()
-    websocket_thread = Thread(target=websocket_server.serve_forever)
-    print('Starting temp websockets thread')
-    return websocket_thread
-
-
 def main():
     print('Initializing camera')
     with picamera.PiCamera() as camera:
@@ -172,8 +158,6 @@ def main():
             app=WebSocketWSGIApplication(handler_cls=StreamingWebSocket))
         websocket_server.initialize_websockets_manager()
         websocket_thread = Thread(target=websocket_server.serve_forever)
-
-        websocket_temp = init_temp_sender()
         print('Initializing HTTP server on port %d' % HTTP_PORT)
         http_server = StreamingHttpServer()
         http_thread = Thread(target=http_server.serve_forever)
@@ -186,7 +170,6 @@ def main():
         try:
             print('Starting websockets thread')
             websocket_thread.start()
-            websocket_temp.start()
             print('Starting HTTP server thread')
             http_thread.start()
             print('Starting broadcast thread')
@@ -208,7 +191,6 @@ def main():
             http_thread.join()
             print('Waiting for websockets thread to finish')
             websocket_thread.join()
-            websocket_temp.join()
 
 
 if __name__ == '__main__':
