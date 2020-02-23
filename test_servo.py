@@ -20,6 +20,11 @@ try:
     print("input pin:")
     num2 =int(input())
     p.ChangeDutyCycle(num2)
+    print("input your value")
+    num1 = int(input())
+    p.ChangeDutyCycle(num1)
+    time.sleep(0.5)
+    p.ChangeDutyCycle(2)
 except KeyboardInterrupt:
   p.stop()
   GPIO.cleanup()
